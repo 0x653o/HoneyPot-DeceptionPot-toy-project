@@ -1,0 +1,97 @@
+# ============================================
+# Honeypot Configuration
+# ============================================
+
+# --- Protocol Port Mappings ---
+# Sequential ports starting from 10001 to avoid pattern detection
+protocols:
+  ssh:
+    enabled: true
+    port: 10001
+    banner: "SSH-2.0-OpenSSH_8.9p1 Ubuntu-3ubuntu0.6"
+    max_auth_attempts: 3
+
+  http:
+    enabled: true
+    port: 10002
+    server_header: "Apache/2.4.58 (Ubuntu)"
+    server_hostname: "webserver"
+
+  ftp:
+    enabled: true
+    port: 10003
+    banner: "220 (vsFTPd 3.0.5)"
+    allow_anonymous: true
+
+  telnet:
+    enabled: true
+    port: 10004
+    hostname: "honeypot-server"
+    os_banner: "Ubuntu 22.04.3 LTS"
+    fake_user: "test"
+    max_login_attempts: 3
+
+  smtp:
+    enabled: true
+    port: 10005
+    hostname: "mail.example.com"
+    banner: "220 mail.example.com ESMTP Postfix (Ubuntu)"
+    max_message_size: 10240000
+
+# --- Sandbox Configuration ---
+sandbox:
+  enabled: true
+  # Falls back to pure-asyncio if nsjail not available (dev mode)
+  fallback_no_sandbox: true
+  time_limit_seconds: 30
+  memory_limit_mb: 16
+  # Seccomp profile path (relative to project root)
+  seccomp_profile: "seccomp-profile.json"
+
+# --- Logging ---
+logging:
+  log_file: "data/honeypot.log"
+  db_file: "data/honeypot.db"
+  log_level: "INFO"
+  # Max log file size before rotation (bytes)
+  max_file_size: 10485760  # 10 MB
+  backup_count: 5
+
+# --- Rate Limiting ---
+rate_limit:
+  enabled: true
+  # Max connections per IP per window
+  max_connections: 20
+  # Time window in seconds
+  window_seconds: 60
+  # IPs to never block (management, monitoring)
+  whitelist: []
+  # IPs to always block
+  blacklist: []
+
+# --- Management API ---
+management:
+  bind: "127.0.0.1"
+  port: 9090
+  # CORS origins for Web UI
+  cors_origins:
+    - "http://localhost:9090"
+    - "http://127.0.0.1:9090"
+
+# --- Domain (Future Feature) ---
+# Reserved for custom DNS, SSL certificates, domain-based routing
+domain:
+  name: ""
+  ssl:
+    enabled: false
+    cert_path: ""
+    key_path: ""
+  # Future: Traefik/nginx reverse proxy config
+  reverse_proxy:
+    enabled: false
+    provider: ""  # "traefik" or "nginx"
+
+# --- GeoIP ---
+geoip:
+  # Path to MaxMind GeoLite2-City.mmdb file
+  db_path: "data/GeoLite2-City.mmdb"

@@ -1,0 +1,88 @@
+# ==============================================================================
+# Honeypot System — Docker Compose
+# ==============================================================================
+# Two containers on separate networks:
+#   1. honeypot — attacker-facing, ports 10001-10005
+#   2. mgmt    — management API + Web UI, localhost:9090 only
+# ==============================================================================
+
+services:
+  # --- Honeypot Core ---
+  # Attacker-facing: runs protocol handlers inside nsjail sandboxes
+  honeypot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: honeypot-core
+    restart: unless-stopped
+    ports:
+      # Sequential ports — no obvious service pattern
+      - "10001:10001"   # Protocol 1
+      - "10002:10002"   # Protocol 2
+      - "10003:10003"   # Protocol 3
+      - "10004:10004"   # Protocol 4
+      - "10005:10005"   # Protocol 5
+    volumes:
+      - honeypot-data:/app/data
+    cap_drop:
+      - ALL
+    cap_add:
+      - SYS_ADMIN       # Required for nsjail namespaces
+      - NET_ADMIN        # Required for nsjail network namespace
+    security_opt:
+      - no-new-privileges:true
+      - seccomp:seccomp-profile.json
+    read_only: true
+    tmpfs:
+      - /tmp:size=64M,noexec,nosuid
+    networks:
+      - honeypot_net
+      - mgmt_net       # Needs access to write shared data volume
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket; s=socket.socket(); s.connect(('localhost',10001)); s.close()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # --- Management API + Web UI ---
+  # Internal only: NOT accessible from honeypot-facing network
+  mgmt:
+    build:
+      context: .
+      dockerfile: Dockerfile.mgmt
+    container_name: honeypot-mgmt
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:9090:9090"   # Bound to localhost ONLY
+    volumes:
+      - honeypot-data:/app/data:ro   # Read-only access to data
+    networks:
+      - mgmt_net
+    depends_on:
+      honeypot:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9090/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+# --- Volumes ---
+volumes:
+  honeypot-data:
+    driver: local
+
+# --- Networks ---
+networks:
+  # Attacker-facing network
+  honeypot_net:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: hp-public
+
+  # Internal management network (no external access)
+  mgmt_net:
+    driver: bridge
+    internal: true
+    driver_opts:
+      com.docker.network.bridge.name: hp-mgmt

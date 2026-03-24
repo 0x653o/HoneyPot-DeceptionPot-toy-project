@@ -1,0 +1,15 @@
+# Core
+pyyaml>=6.0
+fastapi>=0.104
+uvicorn[standard]>=0.24
+pydantic>=2.0
+
+# Geolocation (optional)
+geoip2>=4.0
+
+# TUI (optional, for building terminal interface)
+textual>=0.40
+httpx>=0.25
+
+# Build (optional, for creating TUI binary)
+# pyinstaller>=6.0
