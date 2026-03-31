@@ -124,10 +124,15 @@ class HoneypotServer:
 
         for port, handler in self._handlers.items():
             try:
+                ssl_ctx = None
+                if hasattr(handler, "get_ssl_context"):
+                    ssl_ctx = handler.get_ssl_context()
+                    
                 server = await asyncio.start_server(
                     lambda r, w, h=handler: self._handle_connection(r, w, h),
                     host="0.0.0.0",
                     port=port,
+                    ssl=ssl_ctx,
                     reuse_address=True,
                 )
                 self._servers.append(server)

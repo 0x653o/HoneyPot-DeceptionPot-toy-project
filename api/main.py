@@ -13,12 +13,14 @@ import yaml
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from .database import HoneypotDatabase
 from .routes import dashboard, logs, analyze
+from .security import verify_api_key
+from .db_parser import DBLogParser
 
 
 def _load_config():
@@ -39,16 +41,20 @@ async def lifespan(app: FastAPI):
     db_path = config.get("logging", {}).get("db_file", "data/honeypot.db")
     db = HoneypotDatabase(db_path)
 
-    # Inject database into route modules
-    dashboard.set_database(db)
-    logs.set_database(db)
-    analyze.set_database(db)
-    analyze.set_config(config)
+    # Store in app state for dependencies
+    app.state.db = db
+    app.state.config = config
 
+    # Start the DB syslog parser background daemon
+    db_parser = DBLogParser(db)
+    import asyncio
+    parser_task = asyncio.create_task(db_parser.start())
+    
     yield  # Application runs
 
     # Cleanup
-    pass
+    db_parser.stop()
+    parser_task.cancel()
 
 
 # Create FastAPI app
@@ -81,10 +87,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include route modules
-app.include_router(dashboard.router)
-app.include_router(logs.router)
-app.include_router(analyze.router)
+# Include route modules with security dependency
+app.include_router(dashboard.router, dependencies=[Depends(verify_api_key)])
+app.include_router(logs.router, dependencies=[Depends(verify_api_key)])
+app.include_router(analyze.router, dependencies=[Depends(verify_api_key)])
 
 
 @app.get("/api/health")

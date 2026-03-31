@@ -128,3 +128,15 @@ class CredentialListResponse(BaseModel):
     page: int
     per_page: int
     credentials: List[CredentialEntry]
+
+
+# --- Ingestion Models ---
+
+class IngestEventReq(BaseModel):
+    session_id: str
+    ip: str
+    port: int
+    protocol: str
+    event_type: str
+    data: str
+    timestamp: Optional[str] = None

@@ -225,9 +225,9 @@ class HoneypotTUI(App):
     TITLE = "🍯 Honeypot Monitor"
     SUB_TITLE = "Terminal Dashboard"
 
-    def __init__(self, api_url: str = "http://127.0.0.1:9090", **kwargs):
+    def __init__(self, api_url: str = "http://127.0.0.1:9090", api_key: str = "", **kwargs):
         super().__init__(**kwargs)
-        self._client = HoneypotClient(api_url)
+        self._client = HoneypotClient(api_url, api_key)
         self._stats_panel = StatsPanel(self._client, id="stats")
         self._attacker_panel = AttackerPanel(self._client, id="attackers")
         self._log_panel = LogPanel(self._client, id="logs")
@@ -272,9 +272,14 @@ def main():
         default="http://127.0.0.1:9090",
         help="Management API URL (default: http://127.0.0.1:9090)",
     )
+    parser.add_argument(
+        "--api-key",
+        default="",
+        help="Management API Key",
+    )
     args = parser.parse_args()
 
-    app = HoneypotTUI(api_url=args.api)
+    app = HoneypotTUI(api_url=args.api, api_key=args.api_key)
     app.run()
 
 

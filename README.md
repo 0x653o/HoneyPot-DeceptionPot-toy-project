@@ -1,228 +1,106 @@
-# 🍯 Honeypot & Log Analyzer
+# 🍯 Polyglot Deception Network & Log Analyzer
 
----
+A production-grade, multi-language honeypot network featuring genuine polyglot architectures (Node.js & PHP), real backing databases (MySQL, PostgreSQL, Redis, Mongo), and legacy protocol traps (Insecure HTTPS/SSL). It captures attacker credentials, automated exploitations, toolkits, and C2 addresses while maintaining strict network isolation between the attacker-facing containers and the management core.
 
-# My first toy project with Antigravity(Claude opus 4.6 thinking/Planning)
+## 🔥 Advanced Architecture
 
----
+Instead of merely simulating attacks in Python, the honeypot forces attackers to interact with **genuine, isolated vulnerable Docker containers** and official database engines, capturing highly sophisticated exploitation attempts natively.
 
-A production-grade, multi-protocol honeypot with per-connection sandboxing, deliberate bait vulnerabilities, real-time analytics, and a management dashboard. Captures attacker credentials, commands, toolkits, and C2 addresses while keeping the host server fully isolated.
-
-## Architecture
-
-```
+```text
                       ATTACKER-FACING (honeypot_net)
-┌─────────────────────────────────────────────────────┐
-│                Docker: Honeypot Core                 │
-│             asyncio + nsjail per-connection           │
-│  ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐        │
-│  │  SSH   │ │  HTTP  │ │  FTP   │ │ Telnet │        │
-│  │ :10001 │ │ :10002 │ │ :10003 │ │ :10004 │        │
-│  └────────┘ └────────┘ └────────┘ └────────┘        │
-│  ┌────────┐                                          │
-│  │  SMTP  │  → data/honeypot.log  (text, regex)     │
-│  │ :10005 │  → data/honeypot.db   (SQLite, API)     │
-│  └────────┘                                          │
-└─────────────────────────────────────────────────────┘
-                             │ shared volume (read-only)
-                      MANAGEMENT (mgmt_net)
-┌─────────────────────────────────────────────────────┐
-│              Docker: Management Server               │
-│  Nginx (:9090) → FastAPI (:8000) → React Dashboard  │
-│  TUI binary connects via API                         │
-└─────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│                   Honeypot Core (Python)                         │
+│  SSH (10001) | HTTP (10002) | FTP (10003) | Telnet (10004)       │
+│  SMTP (10005) | HTTPS (10443 - Legacy SSL Bait)                  │
+└──────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│               Genuine Vulnerable Web Apps (Sandboxed)            │
+│  [ vuln-node-rce  :8081 ]      [ vuln-node-ssrf :8082 ]          │
+│  RCE via child_process         SSRF via Axios                    │
+│  [ vuln-php-lfi   :8083 ]      [ vuln-php-sqli  :8084 ]          │
+│  LFI via include()             SQLi via SQLite Concatenation     │
+└──────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│               Genuine Database Engines                           │
+│  [ MySQL 8: 3306 ]             [ PostgreSQL 15: 5432 ]           │
+│  [ Redis 7: 6379 ]             [ MongoDB 6: 27017 ]              │
+│  (Configured with highly verbose native logging)                 │
+└──────────────────────────────────────────────────────────────────┘
+                                 │
+                   (Internal API Ingestion & Log Tailing)
+                                 ▼
+                         MANAGEMENT (mgmt_net)
+┌──────────────────────────────────────────────────────────────────┐
+│                Management API & Analytics Core                   │
+│  DBLogParser ↔ SQLite ↔ FastAPI ↔ AI Orchestrator ↔ Dashboard    │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
-## Features
+## ✨ Polyglot Vulnerabilities & Sandboxing
 
-### Honeypot Core
+All web applications are **real**, written natively, and execute payloads inside strictly isolated components. We emphasize **per-attacker sandboxing**:
 
-- **5 protocols**: SSH, HTTP, FTP, Telnet, SMTP — all with realistic banners and response flows
-- **Per-connection sandboxing**: nsjail with PID/mount/network/user namespace isolation
-- **Credential capture**: username/password harvesting across all protocols
-- **C2 detection**: captures download URLs from `wget`/`curl` in Telnet fake shell
-- **Dual logging**: text file (analyzer regex-compatible) + SQLite (API queryable)
-- **Rate limiting**: sliding window per-IP with whitelist/blacklist support
+| Microservice | Vulnerability | Exploitation Mechanism & Isolation |
+| :--- | :--- | :--- |
+| **Node.js RCE** | **Command Injection** | `child_process.exec()` allows injecting shell metacharacters. Payload is routed dynamically to a per-attacker `nsjail` root directory, blocking host escape entirely. |
+| **Node.js SSRF** | **SSRF** | `axios.get(url)` requests internal cloud metadata. The container is completely cut off from the local `mgmt_net`, preventing lateral pivoting. |
+| **PHP LFI** | **Path Traversal** | `include($_GET['page'])` naturally traverses the container filesystem, which is natively hardened via Docker's read-only semantics. |
+| **PHP SQLi** | **SQL Injection** | `PDO` using dangerous string concatenation captures payload traversal logic via temporary SQLite memory schemas explicitly bound per user request. |
 
-### Bait Vulnerabilities
+## 🤖 Future AI Integration
 
-Deliberate, realistic-looking vulnerabilities designed to attract and engage attackers. **All baits are pure string I/O** — no real execution, no sandbox escape risk.
+The `api/ai/orchestrator.py` module establishes our future roadmap for **LLM-driven honeypots**. In coming iterations, the sandbox behaviors, filesystem appearances, and internal data responses will be seamlessly manipulated in real-time by Language Models evaluating the incoming payloads dynamically.
 
-| Protocol   | Baits                                                    | Purpose                              |
-| ---------- | -------------------------------------------------------- | ------------------------------------ |
-| **HTTP**   | `/.env` (Laravel env with fake AWS keys, DB creds)       | Attracts info-leak scanners          |
-|            | `/wp-login.php` (real-looking WordPress form)            | Captures POST credentials            |
-|            | `/phpinfo.php` (PHP 8.1.27, `disable_functions` empty)   | Shows "exploitable" PHP config       |
-|            | `/admin/` (401 + `WWW-Authenticate: Basic`)              | Traps Basic auth credential sprayers |
-|            | `/.git/config` (fake GitHub remote URL)                  | Attracts `.git` directory scanners   |
-|            | `/wp-config.php.bak` (WordPress DB credentials)          | Config backup hunters                |
-|            | `/server-status` (Apache status with stats)              | Server info leak                     |
-| **FTP**    | `backup.sql` / `credentials.txt` in directory listing    | Sensitive file bait                  |
-|            | `RETR backup.sql` → fake MySQL dump with bcrypt hashes   | Credential harvesting bait           |
-|            | `STOR` in `/upload/` → fake `226 Transfer complete`      | Captures uploaded payloads           |
-| **SSH**    | Banner: `SSH-2.0-OpenSSH_7.4` (CVE-2018-15473)           | Attracts automated scanners          |
-| **Telnet** | `cat /etc/shadow` → fake `$6$` password hashes           | Looks like root access obtained      |
-|            | `sudo` → asks password, logs it, switches to root prompt | Privilege escalation bait            |
-|            | `wget`/`curl` → simulates successful download            | Captures C2 URLs & payloads          |
-| **SMTP**   | `VRFY` confirms any username exists (`250`)              | Email harvester bait                 |
-|            | `RCPT TO` accepts any external domain (open relay)       | Spammer bait                         |
+## 🗄️ Database & Protocol Baits
 
-> **Security guarantee**: Every bait response is a hardcoded Python string template. No `subprocess`, no `exec`, no filesystem writes, no outbound network calls. The nsjail + Docker + seccomp layers remain untouched.
+- **Native Databases**: MySQL, PostgreSQL, Redis, and Mongo expose their native binary protocols to the internet natively. The Python `DBLogParser` background daemon endlessly tails their explicit audit logs to inject brute-forcing metrics straight into our dashboard.
+- **Insecure SSL/TLS Bait**: The `HTTPS` listener automatically generates local certificates but aggressively downgrades its `sslContext` (disabling TLS 1.3/1.2, enforcing `SECLEVEL=0`) to serve as a magnet for legacy scanner bots hunting for POODLE/BEAST targets.
+- **Python Core Traps**: The legacy Python systems continue to emulate TTY shells (Telnet, SSH) returning fake root hashes, capturing `wget/curl` malware drops, and maintaining open relay emulations for SMTP.
 
-### Host Security
+## 🛡️ Host Security & Ingestion
 
-- Docker network isolation (honeypot vs management on separate networks)
-- nsjail per-connection (PID/mount/network/user namespaces, seccomp, `no-new-privileges`)
-- Custom seccomp syscall whitelist (~95 safe syscalls)
-- Read-only root filesystem (`read_only: true`)
-- `cap_drop: ALL` with minimal `cap_add`
-- Non-root container user
-- Management API bound to `127.0.0.1` only (never exposed to attackers)
+Every polyglot web container ships with an asynchronous logging mechanism. The millisecond an attacker payload hits their vulnerable endpoint, the script `HTTP POST`s the session details back to the secure, internal `mgmt_net`. 
 
-### Analytics
+1. **Network Segmentation**: Reaching the Management Dashboard requires navigating to localhost on the host machine. The vulnerable apps only possess internal routes to the ingestion API.
+2. **API Keys**: All internal REST tracking relies on `X-API-Key` headers securely mapped via `.env`.
+3. **Execution Containment**: The Node and PHP RCE vulnerabilities execute within strictly isolated scopes. Tools like `nsjail` ensure attacker sessions are purely ephemeral, read-only sinks.
 
-- Real-time web dashboard with WebSocket live connection feed
-- IP geolocation (MaxMind GeoLite2)
-- Reverse DNS lookups
-- Bait trigger tracking (`bait_triggered` events in database)
-- CLI log analyzer with text/JSON reports
-- TUI binary for terminal-based monitoring
+## 🚀 Quick Start
 
-## Quick Start
-
-### Docker (Recommended)
+Ensure Docker and Make are installed, then provision everything simultaneously.
 
 ```bash
-# Clone and start
-git clone <repo-url>
-cd Honey&LogWithAnalyze
-docker compose up -d
+# Provide environment variables (ports, API keys)
+cp .env.example .env
 
-# View dashboard
-open http://localhost:9090
+# Build and start the entire Polyglot network in the background
+make run
+
+# Monitor the logs natively with the integrated Terminal UI
+python3 -m tui --api-key <YOUR_KEY>
+
+# View the analytics dashboard
+http://localhost:9090
 ```
 
-### Local Development
+## 📂 Project Structure
 
-```bash
-# Install dependencies
-pip install -r requirements.txt
-
-# Start honeypot
-python -m honeypot --config config.yaml
-
-# Start API server (separate terminal)
-uvicorn api.main:app --host 127.0.0.1 --port 9090
+```text
+.
+├── analyzer/                 # CLI Log Analysis tool (Text regex parser)
+├── api/                      # Main Python FastAPI Management App (SQLite, Websockets)
+│   └── ai/                   # AI Orchestrator Module (LLM ingestion logic)
+├── honeypot/                 # Core Asyncio TCP Server (SSH, HTTP, FTP, Telnet, SMTP, HTTPS)
+├── tui/                      # Textual-based Terminal User Interface Client
+├── vulnerabilities/          # Separated Polyglot Microservices
+│   ├── vuln-node-rce/        # Node.js Command Injection Trap (nsjail sandbox)
+│   ├── vuln-node-ssrf/       # Node.js SSRF Trap
+│   ├── vuln-php-lfi/         # PHP Path Traversal Trap
+│   └── vuln-php-sqli/        # PHP SQLi Trap (Ephemeral DB)
+├── web/                      # React/Vite Frontend Web Dashboard
+├── config.yaml               # Global Honeypot Settings & Protocol Flags
+├── docker-compose.yml        # Multi-Container Orchestration definition
+├── Dockerfile                # Honeypot Core NSJail build specification
+├── Dockerfile.mgmt           # Management API & Nginx build specification
+└── Makefile                  # Setup and teardown commands (`make run`, `make clean`)
 ```
-
-### Run Analyzer
-
-```bash
-# Text report from database
-python -m analyzer --db data/honeypot.db
-
-# Text report from log file
-python -m analyzer --log data/honeypot.log
-
-# JSON output with GeoIP enrichment
-python -m analyzer --db data/honeypot.db --json --geoip data/GeoLite2-City.mmdb
-
-# Filter by protocol
-python -m analyzer --db data/honeypot.db --protocol ssh --top 50
-```
-
-### TUI Monitor
-
-```bash
-# Run TUI dashboard
-python -m tui --api http://localhost:9090
-```
-
-## Testing Connections
-
-```bash
-# SSH — will show OpenSSH_7.4 banner
-nc localhost 10001
-
-# HTTP — try bait routes
-curl http://localhost:10002/.env
-curl http://localhost:10002/wp-login.php
-curl http://localhost:10002/phpinfo.php
-curl -u admin:password http://localhost:10002/admin/
-
-# FTP — browse sensitive files
-ftp localhost 10003
-
-# Telnet — interactive fake shell
-telnet localhost 10004
-
-# SMTP — test open relay
-telnet localhost 10005
-```
-
-## GeoIP Setup (Optional)
-
-1. Sign up at [MaxMind](https://www.maxmind.com/en/geolite2/signup)
-2. Download **GeoLite2-City** database
-3. Place `GeoLite2-City.mmdb` in `data/`
-
-## Configuration
-
-Edit `config.yaml` to customize:
-
-- Protocol ports and banners
-- Sandbox time/memory limits
-- Rate limiting thresholds
-- Management API bind address
-- Domain settings (future feature)
-
-## Project Structure
-
-```
-├── honeypot/              # Honeypot server (asyncio + nsjail)
-│   ├── __main__.py        # CLI: python -m honeypot
-│   ├── core.py            # Main async server loop
-│   ├── config.py          # Typed config loader (dataclasses)
-│   ├── sandbox.py         # nsjail wrapper
-│   ├── logger.py          # Dual-sink logger (file + SQLite)
-│   ├── utils.py           # Rate limiter, session IDs
-│   └── protocols/         # Protocol handlers
-│       ├── base.py        # BaseProtocolHandler ABC
-│       ├── ssh.py         # SSH (CVE-2018-15473 bait banner)
-│       ├── http.py        # HTTP (7 bait routes)
-│       ├── ftp.py         # FTP (sensitive files, writable upload)
-│       ├── telnet.py      # Telnet (shadow, sudo, download sim)
-│       └── smtp.py        # SMTP (VRFY confirm, open relay)
-├── analyzer/              # Log analysis library
-│   ├── __main__.py        # CLI: python -m analyzer
-│   ├── parser.py          # Text + SQLite parser
-│   ├── enrichment.py      # GeoIP + reverse DNS
-│   └── report.py          # Text + JSON reports
-├── api/                   # FastAPI management API
-│   ├── main.py            # App + static mount guard
-│   ├── database.py        # Read-only SQLite queries
-│   ├── models.py          # Pydantic schemas
-│   └── routes/            # Dashboard, logs, analysis endpoints
-├── web/                   # React dashboard (Vite)
-│   └── src/
-│       ├── api.js         # API client + WebSocket (auto wss:/ws:)
-│       ├── index.css      # Glassmorphism design system
-│       └── pages/         # Dashboard, Attackers, Logs
-├── tui/                   # Terminal UI (Textual)
-│   ├── __main__.py        # CLI: python -m tui
-│   ├── app.py             # Tabbed TUI with auto-refresh
-│   └── build.spec         # PyInstaller spec
-├── config.yaml            # Honeypot configuration
-├── nginx.conf             # Nginx reverse proxy config
-├── supervisord.conf       # Process manager config
-├── docker-compose.yml     # Container orchestration
-├── Dockerfile             # Honeypot container
-├── Dockerfile.mgmt        # Management container (multi-stage)
-├── seccomp-profile.json   # Custom syscall whitelist
-├── .dockerignore          # Build exclusions
-└── requirements.txt       # Python dependencies
-```
-
-## License
-
-MIT

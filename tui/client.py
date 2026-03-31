@@ -10,9 +10,12 @@ from typing import Optional, Callable
 class HoneypotClient:
     """Synchronous HTTP client for the honeypot management API."""
 
-    def __init__(self, base_url: str = "http://127.0.0.1:9090"):
+    def __init__(self, base_url: str = "http://127.0.0.1:9090", api_key: str = ""):
         self._base_url = base_url.rstrip("/")
-        self._client = httpx.Client(base_url=self._base_url, timeout=10.0)
+        headers = {}
+        if api_key:
+            headers["X-API-Key"] = api_key
+        self._client = httpx.Client(base_url=self._base_url, headers=headers, timeout=10.0)
 
     def get_stats(self) -> dict:
         """Fetch dashboard statistics."""

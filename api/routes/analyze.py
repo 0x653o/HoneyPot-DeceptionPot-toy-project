@@ -3,9 +3,10 @@ Analysis API route.
 POST /api/analyze — trigger full analysis and return JSON report.
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import Optional
 
+from ..dependencies import get_db, get_config
 from ..database import HoneypotDatabase
 from ..models import AnalysisReport
 
@@ -14,25 +15,14 @@ import os
 
 router = APIRouter(prefix="/api", tags=["analysis"])
 
-db: Optional[HoneypotDatabase] = None
-_config = None
-
-
-def set_database(database: HoneypotDatabase):
-    global db
-    db = database
-
-
-def set_config(config):
-    global _config
-    _config = config
-
 
 @router.post("/analyze")
 async def run_analysis(
     protocol: Optional[str] = Query(None),
     top_n: int = Query(20, ge=1, le=100),
     enrich: bool = Query(True),
+    db: HoneypotDatabase = Depends(get_db),
+    _config: dict = Depends(get_config),
 ):
     """
     Run full analysis on the honeypot data.

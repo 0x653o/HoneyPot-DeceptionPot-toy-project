@@ -159,7 +159,151 @@ AWS_ACCESS_KEY_ID=AKIAIOSFODNN7FAKE123
 AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYFAKEKEY999
 AWS_DEFAULT_REGION=us-east-1
 AWS_BUCKET=webapp-assets-prod
+
+# Internal Management API
+MGMT_API_URL=http://localhost:9090
+HONEYPOT_API_KEY=hk_live_8f92bd8c734a6eef9012
 """
+
+    BAIT_PASSWD_FILE = """root:x:0:0:root:/root:/bin/bash
+daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
+bin:x:2:2:bin:/bin:/usr/sbin/nologin
+sys:x:3:3:sys:/dev:/usr/sbin/nologin
+sync:x:4:65534:sync:/bin:/bin/sync
+games:x:5:60:games:/usr/games:/usr/sbin/nologin
+man:x:6:12:man:/var/cache/man:/usr/sbin/nologin
+lp:x:7:7:lp:/var/spool/lpd:/usr/sbin/nologin
+mail:x:8:8:mail:/var/mail:/usr/sbin/nologin
+news:x:9:9:news:/var/spool/news:/usr/sbin/nologin
+uucp:x:10:10:uucp:/var/spool/uucp:/usr/sbin/nologin
+proxy:x:13:13:proxy:/bin:/usr/sbin/nologin
+www-data:x:33:33:www-data:/var/www:/usr/sbin/nologin
+backup:x:34:34:backup:/var/backups:/usr/sbin/nologin
+list:x:38:38:Mailing List Manager:/var/list:/usr/sbin/nologin
+irc:x:39:39:ircd:/run/ircd:/usr/sbin/nologin
+nobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin
+_apt:x:100:65534::/nonexistent:/usr/sbin/nologin
+systemd-timesync:x:101:101:systemd Time Synchronization,,,:/run/systemd:/usr/sbin/nologin
+systemd-network:x:102:103:systemd Network Management,,,:/run/systemd:/usr/sbin/nologin
+systemd-resolve:x:103:104:systemd Resolver,,,:/run/systemd:/usr/sbin/nologin
+messagebus:x:104:105::/nonexistent:/usr/sbin/nologin
+sshd:x:105:65534::/run/sshd:/usr/sbin/nologin
+mysql:x:106:108:MySQL Server,,,:/nonexistent:/bin/false
+admin:x:1000:1000:admin,,,:/home/admin:/bin/bash
+postgres:x:107:109:PostgreSQL administrator,,,:/var/lib/postgresql:/bin/bash
+redis:x:108:110:Redis Server,,,:/var/lib/redis:/usr/sbin/nologin
+"""
+
+    BAIT_SPRING_ENV = """{
+  "activeProfiles": [
+    "production"
+  ],
+  "propertySources": [
+    {
+      "name": "applicationConfig: [classpath:/application-production.yml]",
+      "properties": {
+        "spring.datasource.url": {
+          "value": "jdbc:mysql://db.internal:{port}/main"
+        },
+        "spring.datasource.username": {
+          "value": "spring_admin"
+        },
+        "spring.datasource.password": {
+          "value": "Str0ngP@ssw0rd!2024"
+        },
+        "aws.secretKey": {
+          "value": "AKIAIOSFODNN7EXAMPLE=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+        }
+      }
+    }
+  ]
+}"""
+
+    BAIT_EXPRESS_ERROR = """<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Error</title>
+</head>
+<body>
+<pre>TypeError: Cannot read properties of undefined (reading &#39;id&#39;)<br> &nbsp; &nbsp;at authMiddleware (/usr/src/app/src/middleware/auth.js:42:15)<br> &nbsp; &nbsp;at Layer.handle [as handle_request] (/usr/src/app/node_modules/express/lib/router/layer.js:95:5)<br> &nbsp; &nbsp;at next (/usr/src/app/node_modules/express/lib/router/route.js:144:13)<br> &nbsp; &nbsp;at Route.dispatch (/usr/src/app/node_modules/express/lib/router/route.js:114:3)<br> &nbsp; &nbsp;at Layer.handle [as handle_request] (/usr/src/app/node_modules/express/lib/router/layer.js:95:5)<br> &nbsp; &nbsp;at /usr/src/app/node_modules/express/lib/router/index.js:284:15<br> &nbsp; &nbsp;at Function.process_params (/usr/src/app/node_modules/express/lib/router/index.js:346:12)</pre>
+</body>
+</html>"""
+
+    BAIT_PACKAGE_JSON = """{
+  "name": "backend-api",
+  "version": "1.0.0",
+  "description": "Core API",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "jsonwebtoken": "^8.5.1",
+    "mongoose": "^6.0.12",
+    "lodash": "^4.17.20"
+  }
+}"""
+
+    BAIT_DJANGO_DEBUG = """<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="robots" content="NONE,NOARCHIVE">
+  <title>Page not found at {path}</title>
+  <style type="text/css">
+    html * { padding:0; margin:0; }
+    body * { padding:10px 20px; }
+    body * * { padding:0; }
+    body { font:small sans-serif; background:#eee; color:#000; }
+    body>div { border-bottom:1px solid #ddd; }
+    h1 { font-weight:normal; margin-bottom:.4em; }
+    h1 span { font-size:60%; color:#666; font-weight:normal; }
+    table { border:none; border-collapse: collapse; width:100%; }
+    td, th { vertical-align:top; padding:2px 3px; }
+    th { width:12em; text-align:right; color:#666; padding-right:.5em; }
+    #info { background:#f6f6f6; }
+    #info ol { margin: 0.5em 4em; }
+    #info ol li { font-family: monospace; }
+    #summary { background: #ffc; }
+    #explanation { background:#eee; border-bottom: 0px none; }
+    pre.exception_value { font-family: sans-serif; color: #575757; font-size: 1.5em; margin: 10px 0 10px 0; }
+  </style>
+</head>
+<body>
+  <div id="summary">
+    <h1>Page not found <span>(404)</span></h1>
+    <table class="meta">
+      <tr>
+        <th>Request Method:</th>
+        <td>GET</td>
+      </tr>
+      <tr>
+        <th>Request URL:</th>
+        <td>http://{hostname}{path}</td>
+      </tr>
+      <tr>
+        <th>Django Version:</th>
+        <td>4.2.1</td>
+      </tr>
+    </table>
+  </div>
+  <div id="info">
+    <p>Using the URLconf defined in <code>config.urls</code>, Django tried these URL patterns, in this order:</p>
+    <ol>
+      <li>admin/</li>
+      <li>api/v1/auth/</li>
+      <li>api/v1/users/</li>
+      <li>api/v1/billing/</li>
+    </ol>
+    <p>The current path, <code>{path}</code>, didn’t match any of these.</p>
+  </div>
+  <div id="explanation">
+    <p>You’re seeing this error because you have <code>DEBUG = True</code> in your Django settings file. Change that to <code>False</code>, and Django will display a standard 404 page.</p>
+  </div>
+</body>
+</html>"""
 
     BAIT_GIT_CONFIG = """[core]
 \trepositoryformatversion = 0
@@ -523,6 +667,46 @@ hr {{width: 934px; background-color: #ccc; border: 0; height: 1px;}}
             })
             return self._build_response(200, "OK", headers, body)
 
+        elif path.startswith("/index.php") or path.startswith("/page.php"):
+            # Simple Path Traversal / LFI Bait
+            query = request.get("query_params", {})
+            page_param = query.get("page", [""])[0] or query.get("file", [""])[0]
+            
+            if "../" in page_param or "..%2f" in page_param.lower() or "passwd" in page_param:
+                self._logger.log_event(conn_id, "bait_triggered", f"Path Traversal (LFI): {page_param}")
+                body = self.BAIT_PASSWD_FILE
+                headers = self._base_headers()
+                headers.update({
+                    "Content-Type": "text/plain; charset=UTF-8",
+                    "Content-Length": str(len(body.encode("utf-8"))),
+                })
+                return self._build_response(200, "OK", headers, body)
+            else:
+                body = self.DEFAULT_PAGE.format(hostname=self._hostname, port=port_num)
+                headers = self._base_headers()
+                headers.update({"Content-Type": "text/html; charset=UTF-8", "Content-Length": str(len(body.encode("utf-8")))})
+                return self._build_response(200, "OK", headers, body)
+
+        elif path.startswith("/api/v1/search"):
+            # Advanced XSS Search / Reflected XSS
+            query = request.get("query_params", {})
+            q_param = query.get("q", [""])[0]
+            
+            if "<script" in q_param.lower() or "javascript:" in q_param.lower() or "onerror" in q_param.lower() or "onload" in q_param.lower():
+                self._logger.log_event(conn_id, "bait_triggered", f"Reflected XSS Attempt: {q_param}")
+            
+            # Vulnerable API response reflecting exactly what was typed
+            body = f'{{"status": "success", "results": [], "message": "No results found for \\"{q_param}\\""}}'
+            headers = self._base_headers()
+            headers.update({
+                "Content-Type": "application/json",
+                # WEAK CSP headers for XSS / XS-Search testing!
+                "Content-Security-Policy": "default-src 'self' 'unsafe-inline' 'unsafe-eval'",
+                "X-XSS-Protection": "0",
+                "Content-Length": str(len(body.encode("utf-8")))
+            })
+            return self._build_response(200, "OK", headers, body)
+
         elif path in ("/wp-config.php.bak", "/wp-config.php.old",
                        "/wp-config.php.save", "/wp-config.txt"):
             # WordPress config backup bait
@@ -601,6 +785,51 @@ understand how to supply the credentials required.</p>
             })
             return self._build_response(200, "OK", headers, body)
 
+        elif path == "/actuator/env":
+            # Java Spring Boot info leak
+            self._logger.log_event(conn_id, "bait_triggered", "spring boot env")
+            body = self.BAIT_SPRING_ENV.format(port=port_num)
+            headers = self._base_headers()
+            headers.update({
+                "Content-Type": "application/vnd.spring-boot.actuator.v3+json",
+                "Content-Length": str(len(body.encode("utf-8"))),
+            })
+            return self._build_response(200, "OK", headers, body)
+
+        elif path.startswith("/api/v1/") or path == "/api/users":
+            # Node.js Express crash
+            self._logger.log_event(conn_id, "bait_triggered", f"express stack trace: {path}")
+            body = self.BAIT_EXPRESS_ERROR
+            headers = self._base_headers()
+            headers.update({
+                "Content-Type": "text/html; charset=utf-8",
+                "Content-Length": str(len(body.encode("utf-8"))),
+                "X-Powered-By": "Express",
+            })
+            return self._build_response(500, "Internal Server Error", headers, body)
+
+        elif path == "/package.json":
+            # Node.js package leak
+            self._logger.log_event(conn_id, "bait_triggered", "package.json leak")
+            body = self.BAIT_PACKAGE_JSON
+            headers = self._base_headers()
+            headers.update({
+                "Content-Type": "application/json",
+                "Content-Length": str(len(body.encode("utf-8"))),
+            })
+            return self._build_response(200, "OK", headers, body)
+
+        elif path.startswith("/django_admin") or path.startswith("/admin_dj"):
+            # Python Django debug page
+            self._logger.log_event(conn_id, "bait_triggered", f"django debug 404: {path}")
+            body = self.BAIT_DJANGO_DEBUG.format(hostname=self._hostname, path=path)
+            headers = self._base_headers()
+            headers.update({
+                "Content-Type": "text/html; charset=utf-8",
+                "Content-Length": str(len(body.encode("utf-8"))),
+            })
+            return self._build_response(404, "Not Found", headers, body)
+
         # ---- END BAIT VULNERABILITIES ----
 
         else:
@@ -646,9 +875,36 @@ understand how to supply the credentials required.</p>
         body = request["body"]
         port_num = self._config.port
 
-        # Log POST body
+        if path.startswith("/api/"):
+            # Attacker might be trying to use the fake MANAGEMENT API leaked in .env
+            self._logger.log_event(conn_id, "bait_triggered", f"HIGH PRIORITY: Attempted management API breach on {path}")
+            # Also log headers to capture if they used the fake HONEYPOT_API_KEY
+            auth = request["headers"].get("X-API-Key", request["headers"].get("Authorization", ""))
+            if auth:
+                self._logger.log_event(conn_id, "auth_attempt", f"Token used: {auth}")
+
+        # Simple XML External Entity (XXE) and Command Injection Bait for POST
         if body:
             self._logger.log_event(conn_id, "http_post_body", body[:2048])
+            
+            # XXE Check
+            if "ENTITY" in body and "SYSTEM" in body:
+                self._logger.log_event(conn_id, "bait_triggered", "XXE Injection Attempt")
+                if "file://" in body or "/etc/passwd" in body:
+                    headers = self._base_headers()
+                    headers.update({"Content-Type": "application/xml"})
+                    resp_body = f"<?xml version=\"1.0\"?><result>{self.BAIT_PASSWD_FILE}</result>"
+                    return self._build_response(200, "OK", headers, resp_body)
+                    
+            # Server-Side Request Forgery Check (SSRF)
+            if "url=http://" in body or "url=https://" in body or "url=file://" in body or "url=dict://" in body or "url=gopher://" in body:
+                try:
+                    form_data = dict(urllib.parse.parse_qsl(body))
+                    url_param = form_data.get("url", form_data.get("target", ""))
+                    if url_param:
+                        self._logger.log_event(conn_id, "bait_triggered", f"SSRF Attempt Target: {url_param}")
+                except Exception:
+                    pass
 
             # Try to extract credentials from form data
             try:

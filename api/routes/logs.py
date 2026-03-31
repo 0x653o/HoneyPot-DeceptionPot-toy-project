@@ -12,24 +12,16 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Query, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, HTTPException, Query, WebSocket, WebSocketDisconnect, Depends, Request
 
+from ..dependencies import get_db
 from ..database import HoneypotDatabase
-from ..models import LogListResponse
+from ..models import LogListResponse, IngestEventReq
 
 router = APIRouter(tags=["logs"])
 
-# Database instance
-db: Optional[HoneypotDatabase] = None
-
 # Connected WebSocket clients
 _ws_clients: set = set()
-
-
-def set_database(database: HoneypotDatabase):
-    """Set the database instance for this router."""
-    global db
-    db = database
 
 
 @router.get("/api/logs", response_model=LogListResponse)
@@ -38,6 +30,7 @@ async def get_logs(
     per_page: int = Query(50, ge=1, le=100),
     protocol: Optional[str] = None,
     ip: Optional[str] = None,
+    db: HoneypotDatabase = Depends(get_db)
 ):
     """Get paginated log entries."""
     try:
@@ -54,7 +47,10 @@ async def get_logs(
 
 
 @router.get("/api/logs/recent")
-async def get_recent_logs(limit: int = Query(10, ge=1, le=100)):
+async def get_recent_logs(
+    limit: int = Query(10, ge=1, le=100),
+    db: HoneypotDatabase = Depends(get_db)
+):
     """Get most recent connections."""
     try:
         return db.get_recent_connections(limit=limit)
@@ -65,7 +61,7 @@ async def get_recent_logs(limit: int = Query(10, ge=1, le=100)):
 
 
 @router.websocket("/ws/live")
-async def websocket_live_feed(websocket: WebSocket):
+async def websocket_live_feed(websocket: WebSocket, db: HoneypotDatabase = Depends(get_db)):
     """
     WebSocket endpoint for real-time log streaming.
     Polls the database for new connections and broadcasts to all clients.
@@ -127,3 +123,32 @@ async def websocket_live_feed(websocket: WebSocket):
         pass
     finally:
         _ws_clients.discard(websocket)
+
+
+# ==============================================================
+# INTERNAL INGESTION API
+# ==============================================================
+# These endpoints are used by the child honeypots (Node, PHP, etc)
+# to report attacks back to the central sqlite database.
+
+@router.post("/api/internal/ingest/event")
+async def ingest_event(
+    req: IngestEventReq,
+    request: Request,
+    db: HoneypotDatabase = Depends(get_db)
+):
+    """Log an attack event from a polyglot honeypot."""
+    # We verify API key at the router inclusion level, so if it 
+    # reaches here it is already authenticated inside the mgmt_net.
+    try:
+        if req.event_type == "connection":
+            db.insert_connection(req.session_id, req.ip, req.port, req.protocol, req.timestamp)
+        else:
+            # Always ensure the connection exists first, or just insert the event.
+            # Realistically we should log the connection too if we want dashboard stats.
+            db.insert_connection(req.session_id, req.ip, req.port, req.protocol, req.timestamp)
+            db.insert_event(req.session_id, req.event_type, req.data, req.timestamp)
+            
+        return {"status": "ok"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

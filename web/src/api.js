@@ -2,47 +2,54 @@ const API_BASE = '/api';
 const WS_PROTO = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 const WS_BASE = `${WS_PROTO}//${window.location.host}/ws`;
 
-export async function fetchStats() {
-  const res = await fetch(`${API_BASE}/stats`);
-  if (!res.ok) throw new Error('Failed to fetch stats');
+function getApiKey() {
+  return localStorage.getItem('HONEYPOT_API_KEY') || '';
+}
+
+async function fetchWithAuth(url, options = {}) {
+  const headers = { ...options.headers };
+  const key = getApiKey();
+  if (key) {
+    headers['X-API-Key'] = key;
+  }
+  const res = await fetch(url, { ...options, headers });
+  if (res.status === 401) {
+    localStorage.removeItem('HONEYPOT_API_KEY');
+    window.location.reload();
+  }
+  if (!res.ok) throw new Error(`HTTP error: ${res.status}`);
   return res.json();
+}
+
+export async function fetchStats() {
+  return fetchWithAuth(`${API_BASE}/stats`);
 }
 
 export async function fetchAttackers(page = 1, perPage = 20, sortBy = 'count', protocol = null) {
   const params = new URLSearchParams({ page, per_page: perPage, sort_by: sortBy });
   if (protocol) params.set('protocol', protocol);
-  const res = await fetch(`${API_BASE}/attackers?${params}`);
-  if (!res.ok) throw new Error('Failed to fetch attackers');
-  return res.json();
+  return fetchWithAuth(`${API_BASE}/attackers?${params}`);
 }
 
 export async function fetchAttackerDetail(ip) {
-  const res = await fetch(`${API_BASE}/attackers/${ip}`);
-  if (!res.ok) throw new Error('Failed to fetch attacker detail');
-  return res.json();
+  return fetchWithAuth(`${API_BASE}/attackers/${ip}`);
 }
 
 export async function fetchLogs(page = 1, perPage = 50, protocol = null, ip = null) {
   const params = new URLSearchParams({ page, per_page: perPage });
   if (protocol) params.set('protocol', protocol);
   if (ip) params.set('ip', ip);
-  const res = await fetch(`${API_BASE}/logs?${params}`);
-  if (!res.ok) throw new Error('Failed to fetch logs');
-  return res.json();
+  return fetchWithAuth(`${API_BASE}/logs?${params}`);
 }
 
 export async function fetchRecentLogs(limit = 10) {
-  const res = await fetch(`${API_BASE}/logs/recent?limit=${limit}`);
-  if (!res.ok) throw new Error('Failed to fetch recent logs');
-  return res.json();
+  return fetchWithAuth(`${API_BASE}/logs/recent?limit=${limit}`);
 }
 
 export async function runAnalysis(protocol = null, topN = 20, enrich = true) {
   const params = new URLSearchParams({ top_n: topN, enrich });
   if (protocol) params.set('protocol', protocol);
-  const res = await fetch(`${API_BASE}/analyze?${params}`, { method: 'POST' });
-  if (!res.ok) throw new Error('Failed to run analysis');
-  return res.json();
+  return fetchWithAuth(`${API_BASE}/analyze?${params}`, { method: 'POST' });
 }
 
 export function createLiveFeed(onMessage) {
@@ -50,7 +57,9 @@ export function createLiveFeed(onMessage) {
   const maxDelay = 30000;
 
   function connect() {
-    const ws = new WebSocket(`${WS_BASE}/live`);
+    const key = getApiKey();
+    const wsUrl = key ? `${WS_BASE}/live?token=${key}` : `${WS_BASE}/live`;
+    const ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
       retryDelay = 1000; // Reset on success

@@ -6,9 +6,10 @@ GET /api/attackers/{ip} — single attacker detail
 GET /api/credentials — paginated credential list
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import Optional
 
+from ..dependencies import get_db
 from ..database import HoneypotDatabase
 from ..models import (
     StatsResponse,
@@ -19,18 +20,9 @@ from ..models import (
 
 router = APIRouter(prefix="/api", tags=["dashboard"])
 
-# Database instance (initialized in main.py lifespan)
-db: Optional[HoneypotDatabase] = None
-
-
-def set_database(database: HoneypotDatabase):
-    """Set the database instance for this router."""
-    global db
-    db = database
-
 
 @router.get("/stats", response_model=StatsResponse)
-async def get_stats():
+async def get_stats(db: HoneypotDatabase = Depends(get_db)):
     """Get overall honeypot statistics."""
     try:
         return db.get_stats()
@@ -50,6 +42,7 @@ async def get_attackers(
     per_page: int = Query(20, ge=1, le=100),
     sort_by: str = Query("count", pattern="^(count|recent)$"),
     protocol: Optional[str] = None,
+    db: HoneypotDatabase = Depends(get_db)
 ):
     """Get paginated list of attacker IPs."""
     try:
@@ -66,7 +59,7 @@ async def get_attackers(
 
 
 @router.get("/attackers/{ip}", response_model=AttackerDetailResponse)
-async def get_attacker_detail(ip: str):
+async def get_attacker_detail(ip: str, db: HoneypotDatabase = Depends(get_db)):
     """Get detailed information about a specific attacker."""
     try:
         result = db.get_attacker_detail(ip)
@@ -85,6 +78,7 @@ async def get_attacker_detail(ip: str):
 async def get_credentials(
     page: int = Query(1, ge=1),
     per_page: int = Query(50, ge=1, le=100),
+    db: HoneypotDatabase = Depends(get_db)
 ):
     """Get paginated credential entries."""
     try:

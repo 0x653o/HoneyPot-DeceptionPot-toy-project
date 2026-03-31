@@ -318,3 +318,44 @@ class HoneypotDatabase:
                 "per_page": per_page,
                 "credentials": entries,
             }
+
+    # --- Ingestion Methods ---
+
+    def insert_connection(self, session_id: str, ip: str, port: int, protocol: str, timestamp: str = None):
+        """Insert a connection log."""
+        if not timestamp:
+            from datetime import datetime, timezone
+            timestamp = datetime.now(timezone.utc).isoformat()
+            
+        with self._get_conn() as conn:
+            conn.execute(
+                "INSERT INTO connections (timestamp, protocol, src_ip, src_port, session_id) VALUES (?, ?, ?, ?, ?)",
+                (timestamp, protocol, ip, port, session_id)
+            )
+            conn.commit()
+
+    def insert_event(self, session_id: str, event_type: str, data: str, timestamp: str = None):
+        """Insert an event log."""
+        if not timestamp:
+            from datetime import datetime, timezone
+            timestamp = datetime.now(timezone.utc).isoformat()
+            
+        with self._get_conn() as conn:
+            conn.execute(
+                "INSERT INTO events (timestamp, session_id, event_type, data) VALUES (?, ?, ?, ?)",
+                (timestamp, session_id, event_type, data)
+            )
+            conn.commit()
+
+    def insert_credential(self, session_id: str, protocol: str, ip: str, username: str, password: str, timestamp: str = None):
+        """Insert credential attempt log."""
+        if not timestamp:
+            from datetime import datetime, timezone
+            timestamp = datetime.now(timezone.utc).isoformat()
+            
+        with self._get_conn() as conn:
+            conn.execute(
+                "INSERT INTO credentials (timestamp, protocol, src_ip, session_id, username, password) VALUES (?, ?, ?, ?, ?, ?)",
+                (timestamp, protocol, ip, session_id, username, password)
+            )
+            conn.commit()

@@ -17,6 +17,12 @@ protocols:
     server_header: "Apache/2.4.58 (Ubuntu)"
     server_hostname: "webserver"
 
+  https:
+    enabled: true
+    port: 10443
+    server_header: "Apache/2.4.58 (Ubuntu)"
+    server_hostname: "secure-webserver"
+
   ftp:
     enabled: true
     port: 10003

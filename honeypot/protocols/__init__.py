@@ -8,6 +8,7 @@ from .http import HTTPHandler
 from .ftp import FTPHandler
 from .telnet import TelnetHandler
 from .smtp import SMTPHandler
+from .https import HTTPSHandler
 
 PROTOCOL_MAP = {
     "ssh": SSHHandler,
@@ -15,6 +16,7 @@ PROTOCOL_MAP = {
     "ftp": FTPHandler,
     "telnet": TelnetHandler,
     "smtp": SMTPHandler,
+    "https": HTTPSHandler,
 }
 
 __all__ = [

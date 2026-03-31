@@ -20,11 +20,16 @@ def main():
         default="http://localhost:9090",
         help="URL of the management API.\nDefault: http://localhost:9090",
     )
+    parser.add_argument(
+        "--api-key",
+        default="",
+        help="Management API Key",
+    )
     args = parser.parse_args()
 
     try:
         from .app import HoneypotTUI
-        app = HoneypotTUI(api_url=args.api)
+        app = HoneypotTUI(api_url=args.api, api_key=args.api_key)
         app.run()
     except ImportError as e:
         print(
