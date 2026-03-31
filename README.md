@@ -65,6 +65,14 @@ Every polyglot web container ships with an asynchronous logging mechanism. The m
 2. **API Keys**: All internal REST tracking relies on `X-API-Key` headers securely mapped via `.env`.
 3. **Execution Containment**: The Node and PHP RCE vulnerabilities execute within strictly isolated scopes. Tools like `nsjail` ensure attacker sessions are purely ephemeral, read-only sinks.
 
+## 📚 Documentation
+
+Detailed documentation is available in the `docs/` directory:
+- [Motivation & Philosophy](docs/motivation.md): Why this project was built and the design principles behind it.
+- [Usage Guide](docs/usage.md): Step-by-step instructions for deployment, configuration, and monitoring.
+- [Architecture Deep-Dive](docs/architecture.md): Detailed explanation of how the different components (Core, API, Vulnerabilities, DB) interact.
+- [Future Enhancements](ENHANCEMENTS.md): The roadmap for upcoming features and research directions.
+
 ## 🚀 Quick Start
 
 Ensure Docker and Make are installed, then provision everything simultaneously.
