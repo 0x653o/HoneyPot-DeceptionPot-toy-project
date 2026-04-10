@@ -91,6 +91,23 @@ python3 -m tui --api-key <YOUR_KEY>
 http://localhost:9090
 ```
 
+## 🛠️ Management Script (`manage.sh`)
+
+A convenient management script is provided to handle the lifecycle of the honeypot services.
+
+```bash
+Usage: ./manage.sh [command]
+
+Commands:
+  start       - Start the honeypot services in the background
+  stop        - Stop and remove the honeypot containers
+  restart     - Restart the honeypot services
+  status      - Show the status of all honeypot containers
+  healthcheck - Check if the honeypot containers are running and healthy
+  logs        - View the logs of all honeypot containers
+  clean       - Stop services and remove associated volumes and networks
+```
+
 ## 📂 Project Structure
 
 ```text
