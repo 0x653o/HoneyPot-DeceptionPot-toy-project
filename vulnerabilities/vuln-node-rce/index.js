@@ -2,6 +2,8 @@ const express = require('express');
 const { exec } = require('child_process');
 const axios = require('axios');
 const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 const port = 8080;
@@ -11,6 +13,17 @@ app.use(express.urlencoded({ extended: true }));
 
 const MGMT_API = process.env.MGMT_API_URL || 'http://mgmt:9090';
 const API_KEY = process.env.HONEYPOT_API_KEY || 'hk_live_8f92bd8c734a6eef9012';
+
+const SANDBOX_DIR = '/tmp/sandboxes';
+
+function getUserTmpDir(ip) {
+    const safeIp = ip.replace(/[^a-zA-Z0-9]/g, '_');
+    const userTmpDir = path.join(SANDBOX_DIR, safeIp);
+    if (!fs.existsSync(userTmpDir)) {
+        fs.mkdirSync(userTmpDir, { recursive: true, mode: 0o777 });
+    }
+    return userTmpDir;
+}
 
 async function logAttack(req, type, data) {
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || 'unknown';
@@ -45,12 +58,33 @@ app.get('/api/ping', (req, res) => {
     }
 
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || 'default';
-    const safeIp = ip.replace(/[^a-zA-Z0-9]/g, '_');
+    const userTmpDir = getUserTmpDir(ip);
     
-    // Per-attacker sandbox: each IP gets its own ephemeral tmpfs via nsjail mapping if we wanted,
-    // but here we just isolate them so they can't escape into the main container.
-    // We bind root as RO, and give them a disposable tmpfs.
-    const nsjailCmd = `nsjail -Mo --user 99999 --group 99999 -R /bin -R /lib -R /usr -R /lib64 -R /etc/resolv.conf -T /tmp -- /bin/sh -c "ping -c 1 ${host}"`;
+    // Per-attacker sandbox: each IP gets its own persistent tmpfs
+    const nsjailCmd = `nsjail -Mo --user 99999 --group 99999 -R /bin -R /lib -R /usr -R /lib64 -R /etc/resolv.conf -B ${userTmpDir}:/tmp -- /bin/sh -c "ping -c 1 ${host}"`;
+
+    exec(nsjailCmd, { timeout: 3000 }, (error, stdout, stderr) => {
+        res.send(`<pre>${stdout || stderr || (error ? error.message : '')}</pre>`);
+    });
+});
+
+// 2. API Generator Trap (Another RCE sink using user's tmp folder)
+app.get('/api/generate', (req, res) => {
+    const template = req.query.template;
+    if (!template) {
+        return res.status(400).send("Missing template parameter");
+    }
+    
+    if (/[;&|]/.test(template) || template.includes('`') || template.includes('$')) {
+        logAttack(req, "rce_attempt", `Template payload: ${template}`);
+    }
+
+    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || 'default';
+    const userTmpDir = getUserTmpDir(ip);
+    
+    // Using API generator trap with nsjail, bind user tmp dir to /tmp
+    // This looks like it's writing an API file and cat-ing it back, vulnerable to command injection
+    const nsjailCmd = `nsjail -Mo --user 99999 --group 99999 -R /bin -R /lib -R /usr -R /lib64 -R /etc/resolv.conf -B ${userTmpDir}:/tmp -- /bin/sh -c "echo ${template} > /tmp/api_output.txt && cat /tmp/api_output.txt"`;
 
     exec(nsjailCmd, { timeout: 3000 }, (error, stdout, stderr) => {
         res.send(`<pre>${stdout || stderr || (error ? error.message : '')}</pre>`);
