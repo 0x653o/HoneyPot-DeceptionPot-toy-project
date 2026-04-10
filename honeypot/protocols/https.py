@@ -22,7 +22,7 @@ class HTTPSHandler(HTTPHandler):
 
         # Auto-generate self-signed cert if missing
         if not cert_path.exists() or not key_path.exists():
-            self._logger._logger.info("Auto-generating self-signed certificate for insecure HTTPS honeypot...")
+            self._logger.log_system("info", "Auto-generating self-signed certificate for insecure HTTPS honeypot...")
             subprocess.run([
                 "openssl", "req", "-x509", "-newkey", "rsa:2048",
                 "-keyout", str(key_path), "-out", str(cert_path),

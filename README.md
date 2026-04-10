@@ -112,3 +112,14 @@ http://localhost:9090
 ├── Dockerfile.mgmt           # Management API & Nginx build specification
 └── Makefile                  # Setup and teardown commands (`make run`, `make clean`)
 ```
+
+## 🛠️ Troubleshooting & Deployment Context
+
+During the initial deployment, several environmental and dependency issues were encountered and resolved. If you run into issues running `make run`, reference these fixes:
+
+1. **`nsjail` Build Failure**: The `nsjail` master branch was unstable. The build was pinned to the stable `3.4` tag and missing `flex` and `bison` dependencies were added to `Dockerfile` and `vulnerabilities/vuln-node-rce/Dockerfile`.
+2. **GID/UID Conflict**: A conflict with the `nodeapp` user creation in `vuln-node-rce` was resolved by utilizing the built-in `node` user provided by the base image.
+3. **Port Collisions**: Host port conflicts (e.g., Redis on 6379, MySQL on 3306) were bypassed by explicitly mapping them to alternative host ports in the `.env` file (e.g., `PORT_REDIS=6380`, `PORT_MYSQL=3307`).
+4. **Network Bridge Conflicts**: Hardcoded bridge names (`hp-public` and `hp-mgmt`) in `docker-compose.yml` caused daemon creation conflicts. These were removed to let Docker automatically manage the bridge networking.
+5. **Honeypot Core Permissions**: The main honeypot Python application crashed instantly because the `USER honeypot` directive in the `Dockerfile` lacked permissions to write to `/app/data/honeypot.log` and properly initialize `nsjail` network namespaces. The core container was temporarily configured to run as root.
+6. **Python Logger Bug**: A Python attribute error (`'HoneypotLogger' object has no attribute '_logger'`) in `honeypot/protocols/https.py` was fixed by properly invoking the `self._logger.log_system()` method.

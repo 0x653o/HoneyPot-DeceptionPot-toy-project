@@ -1,14 +1,11 @@
 .PHONY: help setup run stop clean test format
 
-# Variables
-DOCKER_COMPOSE = docker compose
-
 help:
 	@echo "Honeypot Development Commands"
 	@echo "-----------------------------"
 	@echo "make setup    - Create virtual environment and setup .env"
-	@echo "make run      - Run honeypot and management api using docker compose"
-	@echo "make stop     - Stop docker compose services"
+	@echo "make run      - Run honeypot and management api using docker-compose"
+	@echo "make stop     - Stop docker-compose services"
 	@echo "make clean    - Remove build artifacts, pycache and venv"
 	@echo "make format   - Run black formatter"
 
@@ -16,15 +13,14 @@ setup:
 	@echo "Setting up local development environment..."
 	@if [ ! -f .env ]; then cp .env.example .env; echo "Created .env from .env.example"; fi
 	@if [ ! -d .venv ]; then python3 -m venv .venv; echo "Created virtual environment .venv"; fi
-	@./.venv/bin/pip install --upgrade pip
 	@./.venv/bin/pip install -r requirements.txt -r requirements-dev.txt
 	@echo "Setup complete! Remember to activate your venv: source .venv/bin/activate"
 
 run:
-	$(DOCKER_COMPOSE) up -d --build
+	docker-compose up -d --build
 
 stop:
-	$(DOCKER_COMPOSE) down
+	docker-compose down
 
 clean:
 	rm -rf .venv
@@ -36,8 +32,4 @@ clean:
 	@echo "Cleaned up workspace"
 
 format:
-	@if [ -d .venv ]; then \
-		./.venv/bin/black honeypot/ api/ tui/ analyzer/; \
-	else \
-		echo "Error: .venv not found. Run 'make setup' first."; \
-	fi
+	./.venv/bin/black honeypot/ api/ tui/ analyzer/

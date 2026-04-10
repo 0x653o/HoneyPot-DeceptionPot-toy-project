@@ -13,8 +13,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: honeypot-core
-    restart: unless-stopped
+    #restart: unless-stopped
     ports:
       # Sequential ports — configurable via .env
       - "${PORT_SSH:-10001}:10001"   # Protocol 1
@@ -30,12 +29,12 @@ services:
     cap_add:
       - SYS_ADMIN       # Required for nsjail namespaces
       - NET_ADMIN        # Required for nsjail network namespace
-    security_opt:
-      - no-new-privileges:true
-      - seccomp:seccomp-profile.json
-    read_only: true
-    tmpfs:
-      - /tmp:size=64M,noexec,nosuid
+#    security_opt:
+#      - no-new-privileges:true
+#      - seccomp:seccomp-profile.json
+#    read_only: true
+#    tmpfs:
+#      - /tmp:size=64M,noexec,nosuid
     networks:
       - honeypot_net
       - mgmt_net       # Needs access to write shared data volume
@@ -51,8 +50,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.mgmt
-    container_name: honeypot-mgmt
-    restart: unless-stopped
+    #restart: unless-stopped
     ports:
       - "127.0.0.1:${PORT_MGMT:-9090}:9090"   # Bound to localhost ONLY
     environment:
@@ -72,8 +70,7 @@ services:
   # --- Polyglot Web Vulnerabilities ---
   vuln-node-rce:
     build: vulnerabilities/vuln-node-rce/
-    container_name: honeypot-vuln-node-rce
-    restart: unless-stopped
+    #restart: unless-stopped
     ports:
       - "${PORT_NODE_RCE:-8081}:8080"
     environment:
@@ -96,8 +93,7 @@ services:
 
   vuln-node-ssrf:
     build: vulnerabilities/vuln-node-ssrf/
-    container_name: honeypot-vuln-node-ssrf
-    restart: unless-stopped
+    #restart: unless-stopped
     ports:
       - "${PORT_NODE_SSRF:-8082}:8080"
     environment:
@@ -116,8 +112,7 @@ services:
 
   vuln-php-lfi:
     build: vulnerabilities/vuln-php-lfi/
-    container_name: honeypot-vuln-php-lfi
-    restart: unless-stopped
+    #restart: unless-stopped
     ports:
       - "${PORT_PHP_LFI:-8083}:8080"
     environment:
@@ -136,8 +131,7 @@ services:
 
   vuln-php-sqli:
     build: vulnerabilities/vuln-php-sqli/
-    container_name: honeypot-vuln-php-sqli
-    restart: unless-stopped
+    #restart: unless-stopped
     ports:
       - "${PORT_PHP_SQLI:-8084}:8080"
     environment:
@@ -157,8 +151,7 @@ services:
   # --- Genuine Database Honeypots ---
   mysql:
     image: mysql:8.0
-    container_name: honeypot-mysql
-    restart: unless-stopped
+    #restart: unless-stopped
     ports:
       - "${PORT_MYSQL:-3306}:3306"
     environment:
@@ -171,8 +164,7 @@ services:
 
   postgres:
     image: postgres:15-alpine
-    container_name: honeypot-postgres
-    restart: unless-stopped
+    #restart: unless-stopped
     ports:
       - "${PORT_POSTGRES:-5432}:5432"
     environment:
@@ -185,8 +177,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: honeypot-redis
-    restart: unless-stopped
+    #restart: unless-stopped
     ports:
       - "${PORT_REDIS:-6379}:6379"
     command: redis-server --requirepass admin123 --loglevel verbose
@@ -197,8 +188,7 @@ services:
 
   mongo:
     image: mongo:6
-    container_name: honeypot-mongo
-    restart: unless-stopped
+    #restart: unless-stopped
     ports:
       - "${PORT_MONGO:-27017}:27017"
     command: --profile 2
@@ -219,12 +209,7 @@ networks:
   # Attacker-facing network
   honeypot_net:
     driver: bridge
-    driver_opts:
-      com.docker.network.bridge.name: hp-public
-
   # Internal management network (no external access)
   mgmt_net:
     driver: bridge
     internal: true
-    driver_opts:
-      com.docker.network.bridge.name: hp-mgmt
