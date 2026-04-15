@@ -12,7 +12,7 @@ services:
   honeypot:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: infrastructure/Dockerfile
     #restart: unless-stopped
     ports:
       # Sequential ports — configurable via .env
@@ -68,7 +68,7 @@ services:
   mgmt:
     build:
       context: .
-      dockerfile: Dockerfile.mgmt
+      dockerfile: infrastructure/Dockerfile.mgmt
     #restart: unless-stopped
     ports:
       - "127.0.0.1:${PORT_MGMT:-9090}:9090"   # Bound to localhost ONLY

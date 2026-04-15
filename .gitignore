@@ -31,13 +31,21 @@ env/
 Thumbs.db
 desktop.ini
 
-# Node.js (Web UI)
-web/node_modules/
-web/dist/
+# Node.js
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+npm-debug.log
+yarn-error.log
+
+# Web UI / Frontend specific
+src/frontend/node_modules/
+src/frontend/dist/
 
 # TUI binary
-tui/dist/
-tui/build/
+src/backend/cli/tui/dist/
+src/backend/cli/tui/build/
 *.spec
 
 # Docker
