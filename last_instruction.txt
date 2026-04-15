@@ -1,0 +1,19 @@
+1. want future feature as sysadmin dashboard. add more filter so when i click "Unique Attackers", "Credentials       
+   Captured", "Protocols Active" , then follow result is comming out from that in web. example, what kind of credential 
+   was exposure in Credential captured, who is unique attackers (by using osint tools to recognize as many information  
+   of them.), what protocols is activate and how many port is opened... etc. //// 2. does backend is neccessary to be   
+   contruct in Python??. why don't we use php, node.js, jsp, spring, flask, rust, go.... that many language. because we 
+   are running in docker, do any kind of lang is fine!!!. //// 3. when you test protocols, don't brute-force it using   
+   random port. because we are making non-all port opened service, but like real honey-pot for get an info from         
+   hacker...!! don't brute-force it!!! //// 4. sysadmin need more options to manage everything. like "which file is     
+   uploaded on" on the non-http services. sysadmin page need to be manage them all. //// 5. user interface for http is  
+   still not accessible. fix.  //// 6. build-up "https" services for more real-like services. you can find any other    
+   github repo or search online...etc //// 7. if you need tools for make it? then find in google.com first. maybe most  
+   of the tools is surfing web. if you can't find anyone, then make it from scratch. you can do it. //// 8. DO NOT      
+   BURIED IN ONE PROCESS. if few min has gone, but cannot get return or respond, then get out of that process using     
+   'kill' commands, and do few the forest not the trees of the trees of the trees. //// 9. this is not only for         
+   personal project. this is gonna be in-korea best Honey-pot platform as well. //// 10. Make your own judgments        
+   according to the situation, examine whether it's right as a root cause, and start implementing them. //// 11. let    
+   README.md is only for usage and project overview. and let make docs folder for the most specific, the most elaborate 
+   docs for everyone. //// 12. let's Make use of git a part of daily life. when you need to be update, then first make  
+   branch and switch to branch, text them all, merge to main.

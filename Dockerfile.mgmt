@@ -9,9 +9,9 @@
 FROM node:20-alpine AS web-builder
 
 WORKDIR /app/web
-COPY web/package.json web/package-lock.json* ./
+COPY src/frontend/package.json src/frontend/package-lock.json* ./
 RUN npm ci --silent 2>/dev/null || npm install
-COPY web/ .
+COPY src/frontend/ .
 RUN npm run build
 
 # --- Stage 2: Python API + Nginx ---
@@ -34,10 +34,10 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy API and analyzer code
-COPY api/ ./api/
-COPY analyzer/ ./analyzer/
-COPY honeypot/config.py ./honeypot/config.py
-COPY honeypot/__init__.py ./honeypot/__init__.py
+COPY src/backend/api/ ./api/
+COPY src/backend/cli/analyzer/ ./analyzer/
+COPY src/backend/core/config.py ./honeypot/config.py
+COPY src/backend/core/__init__.py ./honeypot/__init__.py
 COPY config.yaml .
 
 # Copy built Web UI from stage 1

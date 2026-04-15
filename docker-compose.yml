@@ -17,11 +17,9 @@ services:
     ports:
       # Sequential ports — configurable via .env
       - "${PORT_SSH:-10001}:10001"   # Protocol 1
-      - "${PORT_HTTP:-10002}:10002"   # Protocol 2
       - "${PORT_FTP:-10003}:10003"   # Protocol 3
       - "${PORT_TELNET:-10004}:10004"   # Protocol 4
       - "${PORT_SMTP:-10005}:10005"   # Protocol 5
-      - "${PORT_HTTPS:-10443}:10443" # HTTPS Protocol
     volumes:
       - honeypot-data:/app/data
     cap_drop:
@@ -40,6 +38,27 @@ services:
       - mgmt_net       # Needs access to write shared data volume
     healthcheck:
       test: ["CMD", "python", "-c", "import socket; s=socket.socket(); s.connect(('localhost',10001)); s.close()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # --- Genuine Web Server Bait (HTTP/HTTPS) ---
+  vuln-node-bait:
+    build: traps/node-bait-portal/
+    #restart: unless-stopped
+    ports:
+      - "${PORT_HTTP:-10002}:8080"   # HTTP Protocol
+      - "${PORT_HTTPS:-10443}:8443"  # HTTPS Protocol
+    environment:
+      - MGMT_API_URL=http://mgmt:9090
+      - HONEYPOT_API_KEY=${HONEYPOT_API_KEY:-default_secret}
+    networks:
+      - honeypot_net
+      - mgmt_net
+    depends_on:
+      - mgmt
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -69,7 +88,7 @@ services:
 
   # --- Polyglot Web Vulnerabilities ---
   vuln-node-rce:
-    build: vulnerabilities/vuln-node-rce/
+    build: traps/node-rce/
     #restart: unless-stopped
     ports:
       - "${PORT_NODE_RCE:-8081}:8080"
@@ -92,7 +111,7 @@ services:
       retries: 3
 
   vuln-node-ssrf:
-    build: vulnerabilities/vuln-node-ssrf/
+    build: traps/node-ssrf/
     #restart: unless-stopped
     ports:
       - "${PORT_NODE_SSRF:-8082}:8080"
@@ -111,7 +130,7 @@ services:
       retries: 3
 
   vuln-php-lfi:
-    build: vulnerabilities/vuln-php-lfi/
+    build: traps/php-lfi/
     #restart: unless-stopped
     ports:
       - "${PORT_PHP_LFI:-8083}:8080"
@@ -130,7 +149,7 @@ services:
       retries: 3
 
   vuln-php-sqli:
-    build: vulnerabilities/vuln-php-sqli/
+    build: traps/php-sqli/
     #restart: unless-stopped
     ports:
       - "${PORT_PHP_SQLI:-8084}:8080"

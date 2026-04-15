@@ -12,13 +12,13 @@ protocols:
     max_auth_attempts: 3
 
   http:
-    enabled: true
+    enabled: false
     port: 10002
     server_header: "Apache/2.4.58 (Ubuntu)"
     server_hostname: "webserver"
 
   https:
-    enabled: true
+    enabled: false
     port: 10443
     server_header: "Apache/2.4.58 (Ubuntu)"
     server_hostname: "secure-webserver"
@@ -32,7 +32,7 @@ protocols:
   telnet:
     enabled: true
     port: 10004
-    hostname: "honeypot-server"
+    hostname: "ubuntu-server"
     os_banner: "Ubuntu 22.04.3 LTS"
     fake_user: "test"
     max_login_attempts: 3
@@ -67,7 +67,7 @@ logging:
 rate_limit:
   enabled: true
   # Max connections per IP per window
-  max_connections: 20
+  max_connections: 500
   # Time window in seconds
   window_seconds: 60
   # IPs to never block (management, monitoring)

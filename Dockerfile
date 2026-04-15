@@ -38,8 +38,8 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
-COPY honeypot/ ./honeypot/
-COPY analyzer/ ./analyzer/
+COPY src/backend/core/ ./honeypot/
+COPY src/backend/cli/analyzer/ ./analyzer/
 COPY config.yaml .
 COPY seccomp-profile.json .
 
