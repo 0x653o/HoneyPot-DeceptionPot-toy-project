@@ -1,4 +1,4 @@
-1. want future feature as sysadmin dashboard. add more filter so when i click "Unique Attackers", "Credentials       
+#  1. want future feature as sysadmin dashboard. add more filter so when i click "Unique Attackers", "Credentials       
    Captured", "Protocols Active" , then follow result is comming out from that in web. example, what kind of credential 
    was exposure in Credential captured, who is unique attackers (by using osint tools to recognize as many information  
    of them.), what protocols is activate and how many port is opened... etc. //// 2. does backend is neccessary to be   
@@ -17,3 +17,7 @@
    README.md is only for usage and project overview. and let make docs folder for the most specific, the most elaborate 
    docs for everyone. //// 12. let's Make use of git a part of daily life. when you need to be update, then first make  
    branch and switch to branch, text them all, merge to main.
+===============================================================================maybe done========================
+
+update @implementation_plan.md as full reconstruction of backend. i'll throw away legacy code and reconfigure with   
+   modern language and techniques. 
